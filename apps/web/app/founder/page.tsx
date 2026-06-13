@@ -1,6 +1,7 @@
-'use client';
-
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = { title: 'Founder Dashboard | Krushiva' };
 
 const kpiData = [
   { label: 'Total Farmers', value: '10,284', change: '+124', up: true, icon: '🌾', color: 'var(--color-primary-50)' },
@@ -194,14 +195,12 @@ export default function FounderDashboard() {
           { title: 'Trust Analytics', desc: 'Scores, disputes, KYC', href: '/founder/analytics/trust', icon: '🛡️', color: '#fffbeb' },
           { title: 'Growth Metrics', desc: 'MoM growth, retention', href: '/founder/analytics/growth', icon: '📈', color: '#fdf4ff' },
         ].map((a) => (
-          <Link key={a.href} href={a.href} style={{
+          <Link key={a.href} href={a.href} className="card-hover-translate" style={{
             display: 'flex', flexDirection: 'column', gap: 'var(--space-3)',
             padding: 'var(--space-5)', background: a.color,
             border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)',
-            textDecoration: 'none', transition: 'all 200ms',
+            textDecoration: 'none',
           }}
-            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLAnchorElement).style.boxShadow = 'var(--shadow-md)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.transform = ''; (e.currentTarget as HTMLAnchorElement).style.boxShadow = ''; }}
           >
             <span style={{ fontSize: 32 }}>{a.icon}</span>
             <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-bold)', color: 'var(--color-text)' }}>{a.title}</div>

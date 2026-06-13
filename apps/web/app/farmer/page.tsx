@@ -208,14 +208,12 @@ export default function FarmerDashboard() {
           { icon: '📄', label: 'View Invoice', href: '/farmer/orders', desc: 'Download latest invoice' },
           { icon: '🛡️', label: 'KYC Status', href: '/farmer/profile', desc: 'Verification approved' },
         ].map((action) => (
-          <Link key={action.label} href={action.href} style={{
+          <Link key={action.label} href={action.href} className="card-hover-translate" style={{
             display: 'flex', flexDirection: 'column', gap: 'var(--space-2)',
             padding: 'var(--space-5)', background: 'var(--color-surface)',
             border: '1px solid var(--color-border)', borderRadius: 'var(--radius-xl)',
-            textDecoration: 'none', transition: 'all 200ms',
+            textDecoration: 'none',
           }}
-            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.boxShadow = 'var(--shadow-md)'; (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-2px)'; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.boxShadow = ''; (e.currentTarget as HTMLAnchorElement).style.transform = ''; }}
           >
             <span style={{ fontSize: 28 }}>{action.icon}</span>
             <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', color: 'var(--color-text)' }}>{action.label}</div>

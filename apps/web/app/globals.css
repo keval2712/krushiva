@@ -1655,3 +1655,43 @@ h1, h2, h3, h4, h5, h6 {
     padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
   }
 }
+
+/* ============================================================
+   INTERACTIVE HOVER STYLING (REPLACING INLINE HANDLERS)
+   ============================================================ */
+
+.footer-link-hover {
+  transition: color 200ms;
+}
+
+.footer-link-hover:hover {
+  color: white !important;
+}
+
+.footer-social-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  transition: all 200ms;
+  text-decoration: none;
+}
+
+.footer-social-icon:hover {
+  background: rgba(255,255,255,0.15) !important;
+  color: white !important;
+}
+
+.card-hover-translate {
+  transition: all 200ms;
+}
+
+.card-hover-translate:hover {
+  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-2px) !important;
+}
+

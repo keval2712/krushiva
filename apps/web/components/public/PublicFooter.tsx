@@ -1,4 +1,3 @@
-'use client';
 
 import Link from 'next/link';
 
@@ -69,10 +68,7 @@ export default function PublicFooter() {
               <ul style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 {links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} style={{ fontSize: 'var(--text-sm)', transition: 'color 200ms', textDecoration: 'none', color: 'inherit' }}
-                      onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'white'}
-                      onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = ''}
-                    >
+                    <Link href={link.href} className="footer-link-hover" style={{ fontSize: 'var(--text-sm)', textDecoration: 'none', color: 'inherit' }}>
                       {link.label}
                     </Link>
                   </li>
@@ -99,18 +95,7 @@ export default function PublicFooter() {
 
 function SocialIcon({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
   return (
-    <a href={href} aria-label={label} style={{
-      width: 36, height: 36,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      borderRadius: 'var(--radius-md)',
-      background: 'rgba(255,255,255,0.08)',
-      color: 'rgba(255,255,255,0.7)',
-      transition: 'all 200ms',
-      textDecoration: 'none',
-    }}
-      onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.15)'; (e.currentTarget as HTMLAnchorElement).style.color = 'white'; }}
-      onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.08)'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.7)'; }}
-    >
+    <a href={href} aria-label={label} className="footer-social-icon">
       {children}
     </a>
   );
