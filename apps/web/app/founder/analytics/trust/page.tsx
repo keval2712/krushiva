@@ -13,7 +13,7 @@ export default function FounderTrustAnalyticsPage() {
           <h2 className="card-title" style={{ marginBottom: 'var(--space-4)' }}>Average Trust Scores</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
             <div>
-              <div style={{ display: 'flex', justify: 'space-between', fontSize: 'var(--text-xs)', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-xs)', marginBottom: '4px' }}>
                 <span>Farmers Network</span>
                 <strong>⭐ 94.2 Avg</strong>
               </div>
@@ -22,7 +22,7 @@ export default function FounderTrustAnalyticsPage() {
               </div>
             </div>
             <div>
-              <div style={{ display: 'flex', justify: 'space-between', fontSize: 'var(--text-xs)', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-xs)', marginBottom: '4px' }}>
                 <span>Buyers Network</span>
                 <strong>⭐ 96.8 Avg</strong>
               </div>
@@ -31,7 +31,7 @@ export default function FounderTrustAnalyticsPage() {
               </div>
             </div>
             <div>
-              <div style={{ display: 'flex', justify: 'space-between', fontSize: 'var(--text-xs)', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-xs)', marginBottom: '4px' }}>
                 <span>Transporters Network</span>
                 <strong>⭐ 92.5 Avg</strong>
               </div>

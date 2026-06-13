@@ -44,7 +44,7 @@ export default function FounderUserAnalyticsPage() {
         </div>
 
         {/* Verification Status */}
-        <div className="card" style={{ padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', justify: 'center' }}>
+        <div className="card" style={{ padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <h2 className="card-title" style={{ marginBottom: 'var(--space-4)' }}>Verification Level</h2>
           <ul style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)', lineHeight: '1.8', margin: 0, paddingLeft: 'var(--space-4)' }}>
             <li><strong>72%</strong> verified KYC badges</li>

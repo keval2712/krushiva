@@ -19,8 +19,14 @@ export default function BuyerRatingsPage() {
             <h2 className="card-title">Reviews Left for Suppliers</h2>
           </div>
           <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-            {mockReviews.map(r => (
-              <div key={r.id} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-4)', lastChild: { border: 0 } }}>
+            {mockReviews.map((r, index) => (
+              <div
+                key={r.id}
+                style={{
+                  borderBottom: index === mockReviews.length - 1 ? 'none' : '1px solid var(--color-border)',
+                  paddingBottom: index === mockReviews.length - 1 ? 0 : 'var(--space-4)',
+                }}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-1.5)' }}>
                   <div>
                     <strong style={{ color: 'var(--color-primary)' }}>{r.farmer}</strong>
