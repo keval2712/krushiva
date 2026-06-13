@@ -1,0 +1,842 @@
+// ============================================================
+// KRUSHIVA V1 — Complete Prisma Schema
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum UserRole {
+  FARMER
+  BUYER
+  TRANSPORTER
+  ADMIN
+  FOUNDER
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum KYCStatus {
+  NOT_STARTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum KYCDocumentType {
+  AADHAAR
+  PAN
+  GST
+  FSSAI
+  DRIVING_LICENSE
+  VEHICLE_RC
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  SOLD_OUT
+  REMOVED
+}
+
+enum ProductUnit {
+  KG
+  QUINTAL
+  TON
+  PIECE
+  DOZEN
+  LITER
+  BAG
+  BUNDLE
+}
+
+enum RFQStatus {
+  OPEN
+  CLOSED
+  EXPIRED
+  CANCELLED
+}
+
+enum RFQResponseStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum OrderStatus {
+  CREATED
+  ACCEPTED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_TRANSIT
+  NEAR_DESTINATION
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum ShipmentStatus {
+  PENDING
+  ASSIGNED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_TRANSIT
+  NEAR_DESTINATION
+  DELIVERED
+  FAILED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum NotificationType {
+  ORDER_CREATED
+  ORDER_ACCEPTED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  PAYMENT_RECEIVED
+  DISPUTE_RAISED
+  DISPUTE_RESOLVED
+  KYC_APPROVED
+  KYC_REJECTED
+  NEW_MESSAGE
+  NEW_RFQ
+  RFQ_RESPONSE
+  REVIEW_RECEIVED
+  SYSTEM
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  DOCUMENT
+  SYSTEM
+}
+
+enum InvoiceType {
+  PROFORMA
+  FINAL
+  CREDIT_NOTE
+}
+
+// ============================================================
+// USERS & AUTH
+// ============================================================
+
+model User {
+  id            String     @id @default(cuid())
+  phone         String?    @unique
+  email         String?    @unique
+  passwordHash  String?
+  role          UserRole   @default(FARMER)
+  status        UserStatus @default(PENDING)
+  otpCode       String?
+  otpExpiresAt  DateTime?
+  emailVerified Boolean    @default(false)
+  phoneVerified Boolean    @default(false)
+  lastLoginAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  profile             Profile?
+  farmerProfile       FarmerProfile?
+  buyerProfile        BuyerProfile?
+  transporterProfile  TransporterProfile?
+  kycDocuments        KYCDocument[]
+  products            Product[]
+  rfqs                RFQ[]
+  rfqResponses        RFQResponse[]
+  buyerOrders         Order[]            @relation("BuyerOrders")
+  farmerOrders        Order[]            @relation("FarmerOrders")
+  shipments           Shipment[]
+  ratingsGiven        Rating[]           @relation("RatingsGiven")
+  ratingsReceived     Rating[]           @relation("RatingsReceived")
+  reviewsGiven        Review[]           @relation("ReviewsGiven")
+  reviewsReceived     Review[]           @relation("ReviewsReceived")
+  messages            Message[]
+  conversationMembers ConversationMember[]
+  notifications       Notification[]
+  disputesRaised      Dispute[]          @relation("DisputeRaiser")
+  disputesAgainst     Dispute[]          @relation("DisputeTarget")
+  trustScore          TrustScore?
+  auditLogs           AuditLog[]
+  devices             UserDevice[]
+  refreshTokens       RefreshToken[]
+
+  @@map("users")
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName    String
+  avatarUrl   String?
+  bio         String?
+  city        String?
+  state       String?
+  district    String?
+  pincode     String?
+  latitude    Float?
+  longitude   Float?
+  isVerified  Boolean  @default(false)
+  kycStatus   KYCStatus @default(NOT_STARTED)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model FarmerProfile {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farmName         String?
+  farmSize         Float?
+  farmSizeUnit     String?  @default("acres")
+  primaryCrops     String[]
+  certifications   String[]
+  bankAccountName  String?
+  bankAccountNumber String?
+  bankIFSC         String?
+  upiId            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("farmer_profiles")
+}
+
+model BuyerProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName     String?
+  businessType    String?
+  gstNumber       String?
+  fssaiNumber     String?
+  purchaseVolume  String?
+  savedSuppliers  String[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("buyer_profiles")
+}
+
+model TransporterProfile {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyName     String?
+  fleetSize       Int?
+  serviceAreas    String[]
+  bankAccountName  String?
+  bankAccountNumber String?
+  bankIFSC         String?
+  upiId            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  vehicles        Vehicle[]
+  drivers         Driver[]
+
+  @@map("transporter_profiles")
+}
+
+model KYCDocument {
+  id           String          @id @default(cuid())
+  userId       String
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         KYCDocumentType
+  documentUrl  String
+  documentNumber String?
+  isVerified   Boolean         @default(false)
+  verifiedBy   String?
+  verifiedAt   DateTime?
+  rejectionReason String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@map("kyc_documents")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  deviceId  String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+model UserDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceId    String
+  deviceType  String?
+  fcmToken    String?
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, deviceId])
+  @@map("user_devices")
+}
+
+// ============================================================
+// VEHICLES & DRIVERS
+// ============================================================
+
+model Vehicle {
+  id                   String             @id @default(cuid())
+  transporterProfileId String
+  transporter          TransporterProfile @relation(fields: [transporterProfileId], references: [id])
+  vehicleType          String
+  vehicleNumber        String
+  capacity             Float
+  capacityUnit         ProductUnit
+  isActive             Boolean            @default(true)
+  registrationUrl      String?
+  insuranceUrl         String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  shipments            Shipment[]
+
+  @@map("vehicles")
+}
+
+model Driver {
+  id                   String             @id @default(cuid())
+  transporterProfileId String
+  transporter          TransporterProfile @relation(fields: [transporterProfileId], references: [id])
+  fullName             String
+  phone                String
+  licenseNumber        String
+  licenseUrl           String?
+  isActive             Boolean            @default(true)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  shipments            Shipment[]
+
+  @@map("drivers")
+}
+
+// ============================================================
+// CATEGORIES & PRODUCTS
+// ============================================================
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  parentId    String?
+  parent      Category?  @relation("Subcategories", fields: [parentId], references: [id])
+  children    Category[] @relation("Subcategories")
+  icon        String?
+  imageUrl    String?
+  isActive    Boolean    @default(true)
+  sortOrder   Int        @default(0)
+  products    Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id            String        @id @default(cuid())
+  farmerId      String
+  farmer        User          @relation(fields: [farmerId], references: [id])
+  categoryId    String
+  category      Category      @relation(fields: [categoryId], references: [id])
+  name          String
+  description   String?
+  quantity      Float
+  availableQty  Float
+  unit          ProductUnit
+  pricePerUnit  Float
+  currency      String        @default("INR")
+  harvestDate   DateTime?
+  expiryDate    DateTime?
+  city          String?
+  state         String?
+  district      String?
+  latitude      Float?
+  longitude     Float?
+  status        ProductStatus @default(DRAFT)
+  isOrganic     Boolean       @default(false)
+  certifications String[]
+  tags          String[]
+  viewCount     Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  images      ProductImage[]
+  orderItems  OrderItem[]
+  rfqs        RFQ[]
+
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  isPrimary Boolean  @default(false)
+  type      String   @default("photo")
+  caption   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("product_images")
+}
+
+// ============================================================
+// RFQ (Request For Quote)
+// ============================================================
+
+model RFQ {
+  id               String    @id @default(cuid())
+  rfqNumber        String    @unique @default(cuid())
+  buyerId          String
+  buyer            User      @relation(fields: [buyerId], references: [id])
+  productId        String?
+  product          Product?  @relation(fields: [productId], references: [id])
+  categoryId       String?
+  productName      String
+  quantity         Float
+  unit             ProductUnit
+  targetPrice      Float?
+  deliveryLocation String
+  deliveryCity     String?
+  deliveryState    String?
+  deliveryDate     DateTime?
+  notes            String?
+  status           RFQStatus @default(OPEN)
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  responses RFQResponse[]
+
+  @@map("rfqs")
+}
+
+model RFQResponse {
+  id            String            @id @default(cuid())
+  rfqId         String
+  rfq           RFQ               @relation(fields: [rfqId], references: [id])
+  farmerId      String
+  farmer        User              @relation(fields: [farmerId], references: [id])
+  pricePerUnit  Float
+  quantity      Float
+  unit          ProductUnit
+  deliveryDays  Int?
+  notes         String?
+  status        RFQResponseStatus @default(PENDING)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  order Order?
+
+  @@map("rfq_responses")
+}
+
+// ============================================================
+// ORDERS
+// ============================================================
+
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  buyerId         String
+  buyer           User        @relation("BuyerOrders", fields: [buyerId], references: [id])
+  farmerId        String
+  farmer          User        @relation("FarmerOrders", fields: [farmerId], references: [id])
+  rfqResponseId   String?     @unique
+  rfqResponse     RFQResponse? @relation(fields: [rfqResponseId], references: [id])
+  totalAmount     Float
+  currency        String      @default("INR")
+  status          OrderStatus @default(CREATED)
+  paymentStatus   String      @default("PENDING")
+  paymentMethod   String?
+  notes           String?
+  pickupAddress   String?
+  pickupCity      String?
+  pickupState     String?
+  pickupLatitude  Float?
+  pickupLongitude Float?
+  deliveryAddress String?
+  deliveryCity    String?
+  deliveryState   String?
+  deliveryLatitude  Float?
+  deliveryLongitude Float?
+  expectedDelivery DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  items      OrderItem[]
+  shipment   Shipment?
+  invoice    Invoice?
+  dispute    Dispute?
+  timeline   OrderTimeline[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id           String      @id @default(cuid())
+  orderId      String
+  order        Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product     @relation(fields: [productId], references: [id])
+  productName  String
+  quantity     Float
+  unit         ProductUnit
+  pricePerUnit Float
+  totalPrice   Float
+  createdAt    DateTime    @default(now())
+
+  @@map("order_items")
+}
+
+model OrderTimeline {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id])
+  status    OrderStatus
+  notes     String?
+  createdBy String?
+  createdAt DateTime    @default(now())
+
+  @@map("order_timeline")
+}
+
+// ============================================================
+// SHIPMENTS & TRACKING
+// ============================================================
+
+model Shipment {
+  id                String         @id @default(cuid())
+  shipmentNumber    String         @unique
+  trackingNumber    String         @unique
+  qrCode            String?
+  orderId           String         @unique
+  order             Order          @relation(fields: [orderId], references: [id])
+  transporterId     String?
+  transporter       User?          @relation(fields: [transporterId], references: [id])
+  vehicleId         String?
+  vehicle           Vehicle?       @relation(fields: [vehicleId], references: [id])
+  driverId          String?
+  driver            Driver?        @relation(fields: [driverId], references: [id])
+
+  status            ShipmentStatus @default(PENDING)
+  pickupAddress     String?
+  pickupCity        String?
+  pickupState       String?
+  pickupLatitude    Float?
+  pickupLongitude   Float?
+  deliveryAddress   String?
+  deliveryCity      String?
+  deliveryState     String?
+  deliveryLatitude  Float?
+  deliveryLongitude Float?
+
+  expectedPickupAt  DateTime?
+  actualPickupAt    DateTime?
+  expectedDeliveryAt DateTime?
+  actualDeliveryAt  DateTime?
+  etaMinutes        Int?
+
+  // Pickup Proof
+  pickupPhotos      String[]
+  pickupTimestamp   DateTime?
+  pickupLatitudeActual  Float?
+  pickupLongitudeActual Float?
+  pickupConfirmedBy String?
+
+  // Delivery Proof
+  deliveryPhotos    String[]
+  deliveryTimestamp DateTime?
+  deliveryLatitudeActual  Float?
+  deliveryLongitudeActual Float?
+  deliveryOtp       String?
+  deliveryOtpVerified Boolean  @default(false)
+  digitalSignatureUrl String?
+  buyerConfirmedAt  DateTime?
+
+  // Quantity Verification
+  expectedQuantity  Float?
+  actualQuantity    Float?
+  quantityUnit      ProductUnit?
+  quantityNotes     String?
+
+  // Quality
+  dispatchPhotos    String[]
+  deliveryQualityPhotos String[]
+  qualityNotes      String?
+
+  notes             String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  trackingEvents    TrackingEvent[]
+
+  @@map("shipments")
+}
+
+model TrackingEvent {
+  id             String         @id @default(cuid())
+  shipmentId     String
+  shipment       Shipment       @relation(fields: [shipmentId], references: [id])
+  status         ShipmentStatus
+  description    String?
+  latitude       Float?
+  longitude      Float?
+  address        String?
+  photos         String[]
+  recordedBy     String?
+  createdAt      DateTime       @default(now())
+
+  @@map("tracking_events")
+}
+
+// ============================================================
+// INVOICES
+// ============================================================
+
+model Invoice {
+  id            String      @id @default(cuid())
+  invoiceNumber String      @unique
+  orderId       String      @unique
+  order         Order       @relation(fields: [orderId], references: [id])
+  type          InvoiceType @default(PROFORMA)
+  subtotal      Float
+  taxAmount     Float       @default(0)
+  taxPercent    Float       @default(0)
+  totalAmount   Float
+  currency      String      @default("INR")
+  pdfUrl        String?
+  notes         String?
+  issuedAt      DateTime    @default(now())
+  dueDate       DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("invoices")
+}
+
+// ============================================================
+// TRUST & RATINGS
+// ============================================================
+
+model TrustScore {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  score                 Float    @default(0)
+  orderCompletionRate   Float    @default(0)
+  cancellationRate      Float    @default(0)
+  avgRating             Float    @default(0)
+  totalRatings          Int      @default(0)
+  totalOrders           Int      @default(0)
+  completedOrders       Int      @default(0)
+  cancelledOrders       Int      @default(0)
+  disputeCount          Int      @default(0)
+  disputeAgainstCount   Int      @default(0)
+  isVerified            Boolean  @default(false)
+  kycVerified           Boolean  @default(false)
+  lastCalculatedAt      DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("trust_scores")
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  raterId   String
+  rater     User     @relation("RatingsGiven", fields: [raterId], references: [id])
+  rateeId   String
+  ratee     User     @relation("RatingsReceived", fields: [rateeId], references: [id])
+  orderId   String?
+  score     Int
+  createdAt DateTime @default(now())
+
+  @@unique([raterId, rateeId, orderId])
+  @@map("ratings")
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  reviewerId  String
+  reviewer    User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  revieweeId  String
+  reviewee    User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  orderId     String?
+  rating      Int
+  title       String?
+  content     String
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+// ============================================================
+// CHAT & MESSAGING
+// ============================================================
+
+model Conversation {
+  id          String   @id @default(cuid())
+  type        String   @default("DIRECT")
+  orderId     String?
+  title       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members  ConversationMember[]
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model ConversationMember {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime?
+
+  @@unique([conversationId, userId])
+  @@map("conversation_members")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  type           MessageType  @default(TEXT)
+  content        String?
+  fileUrl        String?
+  fileName       String?
+  fileSize       Int?
+  readBy         String[]
+  deletedAt      DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@map("messages")
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+}
+
+// ============================================================
+// DISPUTES
+// ============================================================
+
+model Dispute {
+  id              String        @id @default(cuid())
+  disputeNumber   String        @unique
+  orderId         String        @unique
+  order           Order         @relation(fields: [orderId], references: [id])
+  raisedById      String
+  raisedBy        User          @relation("DisputeRaiser", fields: [raisedById], references: [id])
+  againstUserId   String
+  againstUser     User          @relation("DisputeTarget", fields: [againstUserId], references: [id])
+  type            String
+  description     String
+  status          DisputeStatus @default(OPEN)
+  adminNotes      String?
+  resolution      String?
+  resolvedBy      String?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  evidence DisputeEvidence[]
+
+  @@map("disputes")
+}
+
+model DisputeEvidence {
+  id           String   @id @default(cuid())
+  disputeId    String
+  dispute      Dispute  @relation(fields: [disputeId], references: [id])
+  type         String
+  url          String
+  description  String?
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  @@map("dispute_evidence")
+}
+
+// ============================================================
+// AUDIT LOGS
+// ============================================================
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  entityType String
+  entityId   String?
+  oldValues  Json?
+  newValues  Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@map("audit_logs")
+}
